@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memos - 简洁笔记</title>
+    <link rel="stylesheet" href="css/themes.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-bg: #f3f4f6;
+            --memo-bg: #ffffff;
+            --text-color: #334155;
+            --text-gray: #64748b;
+            --border-color: #e2e8f0;
+            --hover-bg: #f8fafc;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #3b82f6;
+                --primary-hover: #2563eb;
+                --primary-bg: #1e293b;
+                --memo-bg: #334155;
+                --text-color: #e2e8f0;
+                --text-gray: #94a3b8;
+                --border-color: #475569;
+                --hover-bg: #475569;
+            }
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background-color: var(--memo-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .navbar-brand h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .navbar-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .navbar-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .navbar-action:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        /* 主内容区域 */
+        .main-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 16px;
+        }
+        
+        /* 侧栏菜单 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background-color: var(--memo-bg);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .sidebar-menu-item {
+            margin-bottom: 8px;
+        }
+        
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .sidebar-menu-link:hover,
+        .sidebar-menu-link.active {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+        }
+        
+        .sidebar-menu-link svg {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* 备忘录编辑器 */
+        .memo-editor {
+            background-color: var(--memo-bg);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .memo-editor-content {
+            width: 100%;
+            min-height: 120px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 14px;
+            font-size: 15px;
+            line-height: 1.5;
+            resize: none;
+            margin-bottom: 16px;
+            background-color: var(--memo-bg);
+            color: var(--text-color);
+        }
+        
+        .memo-editor-content:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .memo-editor-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .editor-tools {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .tool-btn:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+        }
+        
+        .btn-primary {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        /* 备忘录列表 */
+        .memo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .memo-item {
+            background-color: var(--memo-bg);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: box-shadow 0.2s;
+        }
+        
+        .memo-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .memo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .memo-creator {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+        
+        .memo-creator-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 13px;
+        }
+        
+        .memo-time {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+        
+        .memo-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .memo-action {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .memo-action:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+        }
+        
+        .memo-content {
+            font-size: 15px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .memo-content p {
+            margin-bottom: 8px;
+        }
+        
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <button class="navbar-action" id="toggle-sidebar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <img src="logo.svg" alt="Memos Logo">
+            <h1>Memos</h1>
+        </div>
+        <div class="navbar-actions">
+            <button class="navbar-action" id="search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+            <button class="navbar-action" id="user-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 侧栏菜单 -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>菜单</h2>
+            <button class="navbar-action" id="close-sidebar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link active">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        首页
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                        </svg>
+                        标签
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        日历
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        回收站
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="#" class="sidebar-menu-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"></path>
+                        </svg>
+                        设置
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-container">
+        <!-- 备忘录编辑器 -->
+        <div class="memo-editor">
+            <textarea class="memo-editor-content" placeholder="写点什么..."></textarea>
+            <div class="memo-editor-toolbar">
+                <div class="editor-tools">
+                    <button class="tool-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </button>
+                    <button class="tool-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 3h16a2 2 0 0 1 2 2v6a10 10 0 0 1-10 10A10 10 0 0 1 2 11V5a2 2 0 0 1 2-2z"></path>
+                            <polyline points="8 10 12 14 16 10"></polyline>
+                        </svg>
+                    </button>
+                    <button class="tool-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <button class="btn-primary">保存</button>
+            </div>
+        </div>
+        
+        <!-- 备忘录列表 -->
+        <div class="memo-list">
+            <!-- 示例备忘录 -->
+            <div class="memo-item">
+                <div class="memo-header">
+                    <div class="memo-creator">
+                        <div class="memo-creator-avatar">U</div>
+                        <span>本地用户</span>
+                    </div>
+                    <div class="memo-actions">
+                        <button class="memo-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="memo-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="memo-content">
+                    <p>欢迎使用Memos！这是一个本地笔记应用。</p>
+                </div>
+                <div class="memo-time">2分钟前</div>
+            </div>
+            
+            <!-- 更多备忘录... -->
+            <div class="memo-item">
+                <div class="memo-header">
+                    <div class="memo-creator">
+                        <div class="memo-creator-avatar">U</div>
+                        <span>本地用户</span>
+                    </div>
+                    <div class="memo-actions">
+                        <button class="memo-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="memo-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="memo-content">
+                    <p>Memos是一个轻量级的自托管备忘录中心，可以帮助你记录和分享你的伟大想法。</p>
+                    <p>特点：简洁界面、快速记录、支持Markdown格式。</p>
+                </div>
+                <div class="memo-time">10分钟前</div>
+            </div>
+        </div>
+        
+        <!-- 加载更多 -->
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span>加载更多...</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM元素
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+            const closeSidebarBtn = document.getElementById('close-sidebar');
+            const memoEditor = document.querySelector('.memo-editor-content');
+            const saveBtn = document.querySelector('.btn-primary');
+            const memoList = document.querySelector('.memo-list');
+            const loadingElement = document.querySelector('.loading');
+            
+            // 当前编辑的备忘录ID（如果为空，则表示新建备忘录）
+            let currentEditingMemoId = null;
+            
+            // 切换侧边栏
+            toggleSidebarBtn.addEventListener('click', function() {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            });
+            
+            // 关闭侧边栏
+            function closeSidebar() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+            
+            closeSidebarBtn.addEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
+            
+            // 格式化时间戳
+            function formatTimestamp(timestamp) {
+                const now = Math.floor(Date.now() / 1000);
+                const diff = now - timestamp;
+                
+                if (diff < 60) {
+                    return '刚刚';
+                } else if (diff < 3600) {
+                    return Math.floor(diff / 60) + '分钟前';
+                } else if (diff < 86400) {
+                    return Math.floor(diff / 3600) + '小时前';
+                } else {
+                    const date = new Date(timestamp * 1000);
+                    return date.toLocaleDateString();
+                }
+            }
+            
+            // 获取并显示备忘录列表
+            function fetchAndDisplayMemos() {
+                loadingElement.style.display = 'flex';
+                
+                fetch('http://localhost:8081/api/memo')
+                    .then(response => response.json())
+                    .then(data => {
+                        memoList.innerHTML = ''; // 清空当前列表
+                        
+                        if (data.length === 0) {
+                            memoList.innerHTML = '<div class="memo-item"><div class="memo-content">暂无备忘录</div></div>';
+                            return;
+                        }
+                        
+                        data.forEach(memo => {
+                            const memoElement = document.createElement('div');
+                            memoElement.className = 'memo-item';
+                            memoElement.dataset.id = memo.id;
+                            
+                            memoElement.innerHTML = `
+                                <div class="memo-header">
+                                    <div class="memo-creator">
+                                        <div class="memo-creator-avatar">U</div>
+                                        <span>本地用户</span>
+                                    </div>
+                                    <div class="memo-actions">
+                                        <button class="memo-action edit-btn" data-id="${memo.id}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                            </svg>
+                                        </button>
+                                        <button class="memo-action delete-btn" data-id="${memo.id}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3 6 5 6 21 6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="memo-content">
+                                    ${memo.content.replace(/\n/g, '<br>')}
+                                </div>
+                                <div class="memo-time">${formatTimestamp(memo.createdTs)}</div>
+                            `;
+                            
+                            memoList.appendChild(memoElement);
+                        });
+                        
+                        // 添加编辑按钮事件
+                        document.querySelectorAll('.edit-btn').forEach(btn => {
+                            btn.addEventListener('click', function(event) {
+                                event.stopPropagation();
+                                const memoId = this.dataset.id;
+                                editMemo(memoId);
+                            });
+                        });
+                        
+                        // 添加删除按钮事件
+                        document.querySelectorAll('.delete-btn').forEach(btn => {
+                            btn.addEventListener('click', function(event) {
+                                event.stopPropagation();
+                                const memoId = this.dataset.id;
+                                deleteMemo(memoId);
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('获取备忘录失败:', error);
+                        memoList.innerHTML = '<div class="memo-item"><div class="memo-content">加载失败，请重试</div></div>';
+                    })
+                    .finally(() => {
+                        loadingElement.style.display = 'none';
+                    });
+            }
+            
+            // 保存备忘录（创建或更新）
+            function saveMemo() {
+                const content = memoEditor.value;
+                if (!content.trim()) {
+                    alert('请输入内容');
+                    return;
+                }
+                
+                let url = 'http://localhost:8081/api/memo';
+                let method = 'POST';
+                
+                // 如果是编辑模式，使用PATCH请求
+                if (currentEditingMemoId) {
+                    url = `http://localhost:8081/api/memo/${currentEditingMemoId}`;
+                    method = 'PATCH';
+                }
+                
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: content })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('备忘录已保存:', data);
+                    
+                    // 清空编辑器和重置状态
+                    memoEditor.value = '';
+                    currentEditingMemoId = null;
+                    saveBtn.textContent = '保存';
+                    
+                    // 刷新备忘录列表
+                    fetchAndDisplayMemos();
+                })
+                .catch(error => {
+                    console.error('保存失败:', error);
+                    alert('保存失败，请重试');
+                });
+            }
+            
+            // 编辑备忘录
+            function editMemo(memoId) {
+                // 查找对应的备忘录内容
+                const memoItem = document.querySelector(`.memo-item[data-id="${memoId}"]`);
+                if (memoItem) {
+                    const memoContent = memoItem.querySelector('.memo-content').textContent;
+                    
+                    // 设置编辑状态
+                    currentEditingMemoId = memoId;
+                    memoEditor.value = memoContent;
+                    saveBtn.textContent = '更新';
+                    
+                    // 滚动到编辑器
+                    memoEditor.scrollIntoView({ behavior: 'smooth' });
+                    memoEditor.focus();
+                }
+            }
+            
+            // 删除备忘录
+            function deleteMemo(memoId) {
+                if (confirm('确定要删除这条备忘录吗？')) {
+                    fetch(`http://localhost:8081/api/memo/${memoId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('备忘录已删除:', data);
+                        
+                        // 如果正在编辑被删除的备忘录，重置编辑器
+                        if (currentEditingMemoId === memoId) {
+                            memoEditor.value = '';
+                            currentEditingMemoId = null;
+                            saveBtn.textContent = '保存';
+                        }
+                        
+                        // 刷新备忘录列表
+                        fetchAndDisplayMemos();
+                    })
+                    .catch(error => {
+                        console.error('删除失败:', error);
+                        alert('删除失败，请重试');
+                    });
+                }
+            }
+            
+            // 保存按钮点击事件
+            saveBtn.addEventListener('click', saveMemo);
+            
+            // 初始加载备忘录
+            fetchAndDisplayMemos();
+            
+            // 设置工具按钮点击事件（这里是示例，可以根据需要实现）
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 这里可以实现各种编辑工具的功能，如插入图片、链接等
+                    alert('该功能正在开发中');
+                });
+            });
+            
+            // 搜索按钮点击事件
+            document.getElementById('search-btn').addEventListener('click', function() {
+                alert('搜索功能正在开发中');
+            });
+            
+            // 用户按钮点击事件
+            document.getElementById('user-btn').addEventListener('click', function() {
+                alert('用户设置功能正在开发中');
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,378 @@
+/**
+ * Memos 主题样式
+ * 提供额外的主题选项和样式优化
+ */
+
+/* 主题样式 - 支持亮色和暗色模式 */
+
+/* 亮色主题变量 */
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-active: #1e40af;
+    --primary-bg: #f3f4f6;
+    --secondary-bg: #f9fafb;
+    --memo-bg: #ffffff;
+    --text-color: #334155;
+    --text-gray: #64748b;
+    --text-light: #94a3b8;
+    --border-color: #e2e8f0;
+    --hover-bg: #f8fafc;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --tag-bg: rgba(37, 99, 235, 0.1);
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --info-color: #3b82f6;
+    
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    --border-radius: 8px;
+    --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-track: #f1f5f9;
+}
+
+/* 暗色主题变量 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #3b82f6;
+        --primary-hover: #2563eb;
+        --primary-active: #1d4ed8;
+        --primary-bg: #1e293b;
+        --secondary-bg: #0f172a;
+        --memo-bg: #334155;
+        --text-color: #e2e8f0;
+        --text-gray: #94a3b8;
+        --text-light: #cbd5e1;
+        --border-color: #475569;
+        --hover-bg: #475569;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        --tag-bg: rgba(59, 130, 246, 0.2);
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --error-color: #dc2626;
+        --info-color: #2563eb;
+    }
+}
+
+/* 强制亮色主题 */
+.light-mode {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-active: #1e40af;
+    --primary-bg: #f3f4f6;
+    --secondary-bg: #f9fafb;
+    --memo-bg: #ffffff;
+    --text-color: #334155;
+    --text-gray: #64748b;
+    --text-light: #94a3b8;
+    --border-color: #e2e8f0;
+    --hover-bg: #f8fafc;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --tag-bg: rgba(37, 99, 235, 0.1);
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --info-color: #3b82f6;
+}
+
+/* 强制暗色主题 */
+.dark-mode {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-active: #1d4ed8;
+    --primary-bg: #1e293b;
+    --secondary-bg: #0f172a;
+    --memo-bg: #334155;
+    --text-color: #e2e8f0;
+    --text-gray: #94a3b8;
+    --text-light: #cbd5e1;
+    --border-color: #475569;
+    --hover-bg: #475569;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    --tag-bg: rgba(59, 130, 246, 0.2);
+    --success-color: #059669;
+    --warning-color: #d97706;
+    --error-color: #dc2626;
+    --info-color: #2563eb;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-track);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 工具条增强 */
+.tool-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.tool-btn:hover svg {
+    transform: scale(1.1);
+}
+
+/* 标签样式增强 */
+.memo-tag {
+    transition: all 0.2s ease;
+}
+
+.memo-tag:hover {
+    background-color: rgba(37, 99, 235, 0.2);
+    transform: translateY(-1px);
+}
+
+/* 响应式增强 */
+@media (max-width: 640px) {
+    .sidebar-header {
+        padding: 8px 12px;
+    }
+    
+    .nav-item {
+        padding: 8px 12px;
+        margin: 2px 4px;
+    }
+    
+    .main-container {
+        padding: 12px;
+    }
+    
+    .memo-form {
+        padding: 12px;
+    }
+}
+
+/* RTL支持 */
+[dir="rtl"] .nav-icon {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0040c9;
+        --text-normal: #000000;
+        --text-secondary: #333333;
+        --border-color: #000000;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .sidebar, .memo-form, .memo-actions {
+        display: none !important;
+    }
+    
+    .main-container {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    .memo-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+}
+
+/* 功能特定样式 */
+.search-highlight {
+    background-color: rgba(245, 158, 11, 0.2);
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.markdown-content h1 {
+    font-size: 1.5em;
+}
+
+.markdown-content h2 {
+    font-size: 1.3em;
+}
+
+.markdown-content h3 {
+    font-size: 1.2em;
+}
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+}
+
+.markdown-content li {
+    margin-bottom: 0.25em;
+}
+
+.markdown-content code {
+    background-color: var(--hover-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background-color: var(--hover-bg);
+    padding: 1em;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--border-color);
+    padding-left: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    color: var(--text-gray);
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 0.5em 0;
+}
+
+.markdown-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--border-color);
+    padding: 0.5em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background-color: var(--hover-bg);
+}
+
+/* 复选框样式 */
+.markdown-content input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+
+/* 任务列表样式 */
+.task-list-item {
+    list-style-type: none;
+    margin-left: -1.5em;
+}
+
+/* 标签样式 */
+.tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: var(--tag-bg);
+    color: var(--primary-color);
+    font-size: 0.85em;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    text-decoration: none;
+}
+
+.tag:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* 无障碍增强 */
+:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    z-index: 100;
+    transition: top 0.2s;
+}
+
+.skip-link:focus {
+    top: 0;
+} 
