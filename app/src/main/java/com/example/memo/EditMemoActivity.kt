@@ -7,19 +7,18 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog // Added import
+import androidx.appcompat.app.AlertDialog // Ensure this import is present
 import androidx.appcompat.app.AppCompatActivity
-// org.json.JSONObject is not strictly needed here if MemosDatabaseHelper is refactored
-// to return a domain object or handle JSONObject internally for getMemoById.
 
 class EditMemoActivity : AppCompatActivity() {
 
     private lateinit var editTextMemoContent: EditText
+    private lateinit var editTextTags: EditText // New EditText for tags
     private lateinit var buttonSaveMemo: Button
     private lateinit var buttonDeleteMemo: Button
 
     private lateinit var dbHelper: MemosDatabaseHelper
-    private var currentMemoId: Long = -1L // Use -1L for Long
+    private var currentMemoId: Long = -1L
     private val TAG = "EditMemoActivity"
 
     companion object {
@@ -31,31 +30,32 @@ class EditMemoActivity : AppCompatActivity() {
         setContentView(R.layout.activity_edit_memo)
 
         editTextMemoContent = findViewById(R.id.editTextMemoContent)
+        editTextTags = findViewById(R.id.editTextTags) // Initialize new EditText
         buttonSaveMemo = findViewById(R.id.buttonSaveMemo)
         buttonDeleteMemo = findViewById(R.id.buttonDeleteMemo)
 
         dbHelper = MemosDatabaseHelper(this)
-
         currentMemoId = intent.getLongExtra(EXTRA_MEMO_ID, -1L)
 
         if (currentMemoId != -1L) {
-            title = "Edit Memo" // Set activity title
-            loadMemoContent()
+            title = "Edit Memo"
+            loadMemoContentAndTags() // Updated method name
             buttonDeleteMemo.visibility = View.VISIBLE
         } else {
-            title = "Create Memo" // Set activity title
+            title = "Create Memo"
             buttonDeleteMemo.visibility = View.GONE
         }
 
-        buttonSaveMemo.setOnClickListener { saveMemo() }
+        buttonSaveMemo.setOnClickListener { saveMemoAndTags() } // Updated method name
         buttonDeleteMemo.setOnClickListener { deleteMemo() }
     }
 
-    private fun loadMemoContent() {
-        val memoObject = dbHelper.getMemoById(currentMemoId) // Use new method
-
+    private fun loadMemoContentAndTags() {
+        val memoObject = dbHelper.getMemoById(currentMemoId)
         if (memoObject != null) {
             editTextMemoContent.setText(memoObject.optString("content"))
+            val tags = dbHelper.getTagsForMemo(currentMemoId)
+            editTextTags.setText(tags.joinToString(", "))
         } else {
             Log.e(TAG, "Memo with ID $currentMemoId not found.")
             Toast.makeText(this, "Error loading memo", Toast.LENGTH_SHORT).show()
@@ -63,19 +63,26 @@ class EditMemoActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveMemo() {
+    private fun saveMemoAndTags() {
         val content = editTextMemoContent.text.toString().trim()
         if (content.isEmpty()) {
             Toast.makeText(this, "Content cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
+        var memoIdToUse: Long = currentMemoId
         var success = false
+
         if (currentMemoId == -1L) { // New memo
             val newMemo = dbHelper.createMemo(content)
             if (newMemo != null) {
-                Toast.makeText(this, "Memo saved", Toast.LENGTH_SHORT).show()
-                success = true
+                memoIdToUse = newMemo.optLong("id", -1L)
+                if (memoIdToUse != -1L) {
+                    Toast.makeText(this, "Memo saved", Toast.LENGTH_SHORT).show()
+                    success = true
+                } else {
+                    Toast.makeText(this, "Error saving memo (could not get ID)", Toast.LENGTH_SHORT).show()
+                }
             } else {
                 Toast.makeText(this, "Error saving memo", Toast.LENGTH_SHORT).show()
             }
@@ -88,9 +95,36 @@ class EditMemoActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error updating memo", Toast.LENGTH_SHORT).show()
             }
         }
-        if (success) {
-             setResult(Activity.RESULT_OK)
-             finish()
+
+        if (success && memoIdToUse != -1L) {
+            processAndSaveTags(memoIdToUse)
+            setResult(Activity.RESULT_OK)
+            finish()
+        } else if (success && currentMemoId == -1L) {
+            // New memo saved but ID retrieval failed, or some other issue
+            Log.e(TAG, "Memo saved but issue with ID for tags, or success was false but new memo path.")
+            // Not calling finish, user might need to retry or data is partially saved.
+        }
+    }
+
+    private fun processAndSaveTags(memoId: Long) {
+        dbHelper.unlinkAllTagsFromMemo(memoId) // Unlink old tags first
+
+        val tagString = editTextTags.text.toString().trim()
+        if (tagString.isNotEmpty()) {
+            val tagNames = tagString.split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct() // Avoid duplicate tags for the same memo
+
+            for (tagName in tagNames) {
+                val tagId = dbHelper.findOrCreateTag(tagName)
+                if (tagId != -1L) {
+                    dbHelper.linkMemoToTag(memoId, tagId)
+                } else {
+                    Log.e(TAG, "Failed to find or create tag: $tagName")
+                }
+            }
         }
     }
 

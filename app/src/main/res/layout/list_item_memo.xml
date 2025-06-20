@@ -21,4 +21,13 @@
         android:textSize="12sp"
         android:layout_marginTop="4dp"
         android:textAppearance="?attr/textAppearanceListItemSecondary" />
+
+    <TextView
+        android:id="@+id/textViewMemoTags"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textColor="?android:attr/textColorTertiary"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" /> <!-- Initially gone, shown if tags exist -->
 </LinearLayout>

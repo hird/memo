@@ -36,6 +36,7 @@ class MemoAdapter(
     class MemoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val contentTextView: TextView = itemView.findViewById(R.id.textViewMemoContent)
         private val dateTextView: TextView = itemView.findViewById(R.id.textViewMemoDate)
+        private val tagsTextView: TextView = itemView.findViewById(R.id.textViewMemoTags) // New TextView for tags
 
         fun bind(memo: JSONObject, onItemClick: (JSONObject) -> Unit) {
             contentTextView.text = memo.optString("content", "No content")
@@ -54,6 +55,15 @@ class MemoAdapter(
                 dateTextView.text = datePrefix + format.format(date)
             } else {
                 dateTextView.text = "No date"
+            }
+
+            // Display tags
+            val tagString = memo.optString("tagString", "") // Expecting "tagString" from MainActivity
+            if (tagString.isNotEmpty()) {
+                tagsTextView.text = "Tags: $tagString"
+                tagsTextView.visibility = View.VISIBLE
+            } else {
+                tagsTextView.visibility = View.GONE
             }
 
             itemView.setOnClickListener { onItemClick(memo) }

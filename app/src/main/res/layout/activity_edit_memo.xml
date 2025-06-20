@@ -15,6 +15,18 @@
         android:gravity="top|start"
         android:inputType="textMultiLine"
         app:layout_constraintTop_toTopOf="parent"
+           app:layout_constraintBottom_toTopOf="@+id/editTextTags"
+           app:layout_constraintStart_toStartOf="parent"
+           app:layout_constraintEnd_toEndOf="parent"
+           android:layout_marginBottom="8dp"
+           android:autofillHints="text" />
+
+       <EditText
+           android:id="@+id/editTextTags"
+           android:layout_width="0dp"
+           android:layout_height="wrap_content"
+           android:hint="Tags (comma-separated)"
+           android:inputType="text"
         app:layout_constraintBottom_toTopOf="@+id/buttonSaveMemo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

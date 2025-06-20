@@ -64,11 +64,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadMemos() {
-        val memos = dbHelper.getMemos()
-        memoAdapter.updateMemos(memos)
-        Log.d(TAG, "Loaded ${memos.size} memos.")
+        val rawMemos = dbHelper.getMemos()
+        val memosWithTags = mutableListOf<JSONObject>()
 
-        if (memos.isEmpty()) {
+        for (memoJson in rawMemos) {
+            val memoId = memoJson.optLong("id", -1L)
+            if (memoId != -1L) {
+                val tags = dbHelper.getTagsForMemo(memoId)
+                if (tags.isNotEmpty()) {
+                    memoJson.put("tagString", tags.joinToString(", "))
+                } else {
+                    memoJson.put("tagString", "") // Ensure key exists even if empty
+                }
+            }
+            memosWithTags.add(memoJson)
+        }
+
+        memoAdapter.updateMemos(memosWithTags)
+        Log.d(TAG, "Loaded ${memosWithTags.size} memos with tags.")
+
+        if (memosWithTags.isEmpty()) {
             recyclerViewMemos.visibility = View.GONE
             textViewEmptyList.visibility = View.VISIBLE
         } else {

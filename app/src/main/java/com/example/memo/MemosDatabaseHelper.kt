@@ -21,11 +21,22 @@ class MemosDatabaseHelper(context: Context) : SQLiteOpenHelper(
         private const val DATABASE_VERSION = 1
         
         // 表名
-        const val TABLE_MEMOS = "memo"
-        const val TABLE_USERS = "user"
+        const val TABLE_MEMOS = "memo" // Existing
+        const val TABLE_USERS = "user" // Existing
+        const val TABLE_TAGS = "tags"
+        const val TABLE_MEMO_TAGS = "memo_tags"
+
+        // Common column names
+        const val COLUMN_ID = "id" // Existing
+
+        // Tags table columns
+        const val COLUMN_TAG_NAME = "name"
+
+        // Memo_Tags table columns
+        const val COLUMN_JT_MEMO_ID = "memo_id"
+        const val COLUMN_JT_TAG_ID = "tag_id"
         
         // 列名
-        const val COLUMN_ID = "id"
         const val COLUMN_CONTENT = "content"
         const val COLUMN_USER_ID = "user_id"
         const val COLUMN_CREATED_TS = "created_ts"
@@ -65,6 +76,28 @@ class MemosDatabaseHelper(context: Context) : SQLiteOpenHelper(
         db.execSQL(createUserTable)
         db.execSQL(createMemoTable)
         
+        // Inside onCreate, after creating TABLE_MEMOS:
+
+        val createTagsTable = """
+            CREATE TABLE $TABLE_TAGS (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_TAG_NAME TEXT NOT NULL UNIQUE
+            )
+        """.trimIndent()
+
+        val createMemoTagsTable = """
+            CREATE TABLE $TABLE_MEMO_TAGS (
+                $COLUMN_JT_MEMO_ID INTEGER NOT NULL,
+                $COLUMN_JT_TAG_ID INTEGER NOT NULL,
+                PRIMARY KEY ($COLUMN_JT_MEMO_ID, $COLUMN_JT_TAG_ID),
+                FOREIGN KEY ($COLUMN_JT_MEMO_ID) REFERENCES $TABLE_MEMOS($COLUMN_ID) ON DELETE CASCADE,
+                FOREIGN KEY ($COLUMN_JT_TAG_ID) REFERENCES $TABLE_TAGS($COLUMN_ID) ON DELETE CASCADE
+            )
+        """.trimIndent()
+
+        db.execSQL(createTagsTable)
+        db.execSQL(createMemoTagsTable)
+
         // 创建默认用户
         val defaultUser = ContentValues().apply {
             put(COLUMN_USERNAME, "user")
@@ -90,9 +123,12 @@ class MemosDatabaseHelper(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_MEMOS")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS")
-        onCreate(db)
+        // Inside onUpgrade, before existing DROP TABLE statements:
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_MEMO_TAGS")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_TAGS")
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_MEMOS") // Existing
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_USERS") // Existing
+        onCreate(db) // Existing call at the end
     }
     
     /**
@@ -306,5 +342,85 @@ class MemosDatabaseHelper(context: Context) : SQLiteOpenHelper(
         
         cursor.close()
         return null
+    }
+
+    // Add to MemosDatabaseHelper.kt
+    fun findOrCreateTag(tagName: String): Long {
+        val db = writableDatabase
+        var tagId: Long = -1
+
+        // Check if tag exists
+        var cursor = db.query(
+            TABLE_TAGS,
+            arrayOf(COLUMN_ID),
+            "$COLUMN_TAG_NAME = ?",
+            arrayOf(tagName),
+            null, null, null
+        )
+
+        if (cursor.moveToFirst()) {
+            tagId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID))
+        }
+        cursor.close()
+
+        if (tagId == -1L) { // Tag does not exist, create it
+            val values = ContentValues().apply {
+                put(COLUMN_TAG_NAME, tagName.trim()) // Ensure trimmed
+            }
+            tagId = db.insert(TABLE_TAGS, null, values)
+        }
+        return tagId
+    }
+
+    // Add to MemosDatabaseHelper.kt
+    fun linkMemoToTag(memoId: Long, tagId: Long): Boolean {
+        if (memoId == -1L || tagId == -1L) return false // Invalid IDs
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_JT_MEMO_ID, memoId)
+            put(COLUMN_JT_TAG_ID, tagId)
+        }
+        val result = db.insertWithOnConflict(TABLE_MEMO_TAGS, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+        return result != -1L
+    }
+
+    // Add to MemosDatabaseHelper.kt
+    fun unlinkAllTagsFromMemo(memoId: Long): Boolean {
+        if (memoId == -1L) return false // Invalid ID
+        val db = writableDatabase
+        try {
+            db.delete(TABLE_MEMO_TAGS, "$COLUMN_JT_MEMO_ID = ?", arrayOf(memoId.toString()))
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unlinking tags from memo $memoId", e)
+            return false
+        }
+    }
+
+    // Add to MemosDatabaseHelper.kt
+    fun getTagsForMemo(memoId: Long): List<String> {
+        if (memoId == -1L) return emptyList() // Invalid ID
+        val tags = mutableListOf<String>()
+        val db = readableDatabase
+        // Escaped triple quotes for the SQL query string
+        val query = """
+            SELECT T.$COLUMN_TAG_NAME
+            FROM $TABLE_TAGS T
+            INNER JOIN $TABLE_MEMO_TAGS MT ON T.$COLUMN_ID = MT.$COLUMN_JT_TAG_ID
+            WHERE MT.$COLUMN_JT_MEMO_ID = ?
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query, arrayOf(memoId.toString()))
+
+        try {
+            while (cursor.moveToNext()) {
+                tags.add(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TAG_NAME)))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching tags for memo $memoId", e)
+        } finally {
+            cursor.close()
+        }
+        return tags
     }
 } 
