@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog // Added import
 import androidx.appcompat.app.AppCompatActivity
 // org.json.JSONObject is not strictly needed here if MemosDatabaseHelper is refactored
 // to return a domain object or handle JSONObject internally for getMemoById.
@@ -95,7 +96,19 @@ class EditMemoActivity : AppCompatActivity() {
 
     private fun deleteMemo() {
         if (currentMemoId != -1L) {
-            // Consider adding a confirmation dialog here
+            AlertDialog.Builder(this)
+                .setTitle("Delete Memo")
+                .setMessage("Are you sure you want to delete this memo?")
+                .setPositiveButton("Delete") { _, _ ->
+                    performDelete()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun performDelete() { // New method extracted for actual deletion
+        if (currentMemoId != -1L) { // Check again, though logically covered
             val success = dbHelper.deleteMemo(currentMemoId)
             if (success) {
                 Toast.makeText(this, "Memo deleted", Toast.LENGTH_SHORT).show()

@@ -5,6 +5,8 @@ import android.content.Intent // Required for starting activity
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View // Added import
+import android.widget.TextView // Added import
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts // For modern activity result handling
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fabAddMemo: FloatingActionButton
     private lateinit var memoAdapter: MemoAdapter
     private lateinit var dbHelper: MemosDatabaseHelper
+    private lateinit var textViewEmptyList: TextView // Added property
 
      // ActivityResultLauncher for EditMemoActivity
     private val editMemoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -37,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         recyclerViewMemos = findViewById(R.id.recyclerViewMemos)
         fabAddMemo = findViewById(R.id.fabAddMemo)
+        textViewEmptyList = findViewById(R.id.textViewEmptyList) // Initialize property
 
         setupRecyclerView()
         loadMemos()
@@ -63,6 +67,14 @@ class MainActivity : AppCompatActivity() {
         val memos = dbHelper.getMemos()
         memoAdapter.updateMemos(memos)
         Log.d(TAG, "Loaded ${memos.size} memos.")
+
+        if (memos.isEmpty()) {
+            recyclerViewMemos.visibility = View.GONE
+            textViewEmptyList.visibility = View.VISIBLE
+        } else {
+            recyclerViewMemos.visibility = View.VISIBLE
+            textViewEmptyList.visibility = View.GONE
+        }
     }
     
     // onResume is no longer strictly needed if using ActivityResultLauncher for refresh
@@ -77,8 +89,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAndRequestPermissions() {
         val permissions = arrayOf(
-            android.Manifest.permission.INTERNET,
             android.Manifest.permission.READ_EXTERNAL_STORAGE
+            // android.Manifest.permission.INTERNET, // REMOVED
         )
         
         val permissionsToRequest = ArrayList<String>()

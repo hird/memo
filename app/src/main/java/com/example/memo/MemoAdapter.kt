@@ -40,11 +40,18 @@ class MemoAdapter(
         fun bind(memo: JSONObject, onItemClick: (JSONObject) -> Unit) {
             contentTextView.text = memo.optString("content", "No content")
 
-            val timestamp = memo.optLong("createdTs", 0) * 1000 // Assuming createdTs is in seconds
-            if (timestamp > 0) {
-                val date = Date(timestamp)
+            val createdTimestamp = memo.optLong("createdTs", 0)
+            val updatedTimestamp = memo.optLong("updatedTs", 0)
+
+            // Prioritize updatedTs if it's later than createdTs, otherwise use createdTs
+            val displayTimestamp = if (updatedTimestamp > createdTimestamp) updatedTimestamp else createdTimestamp
+
+            if (displayTimestamp > 0) {
+                val date = Date(displayTimestamp * 1000) // Timestamps are in seconds
                 val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                dateTextView.text = format.format(date)
+                // Optionally, prefix with "Edited: " if updatedTimestamp > createdTimestamp
+                val datePrefix = if (updatedTimestamp > createdTimestamp && createdTimestamp > 0) "(Edited) " else ""
+                dateTextView.text = datePrefix + format.format(date)
             } else {
                 dateTextView.text = "No date"
             }
