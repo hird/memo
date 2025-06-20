@@ -229,6 +229,42 @@ class MemosDatabaseHelper(context: Context) : SQLiteOpenHelper(
         
         return deletedRows > 0
     }
+
+    /**
+     * Get a single memo by its ID
+     */
+    fun getMemoById(memoId: Long): JSONObject? {
+        val db = readableDatabase
+        var memo: JSONObject? = null
+
+        val cursor = db.query(
+            TABLE_MEMOS,
+            null, // All columns
+            "$COLUMN_ID = ?",
+            arrayOf(memoId.toString()),
+            null,
+            null,
+            null
+        )
+
+        if (cursor.moveToFirst()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID))
+            val content = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CONTENT))
+            val userId = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_USER_ID)) // Though userId is fixed for now
+            val createdTs = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TS))
+            val updatedTs = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_UPDATED_TS))
+
+            memo = JSONObject().apply {
+                put("id", id)
+                put("content", content)
+                put("userId", userId)
+                put("createdTs", createdTs)
+                put("updatedTs", updatedTs)
+            }
+        }
+        cursor.close()
+        return memo
+    }
     
     /**
      * 获取用户信息
